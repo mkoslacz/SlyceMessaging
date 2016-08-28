@@ -102,7 +102,7 @@ public class MainActivity extends AppCompatActivity {
 
         slyceMessagingFragment.setLoadMoreMessagesListener(new LoadMoreMessagesListener() {
             @Override
-            public List<Message> loadMoreMessages() {
+            public void loadMoreMessages() {
                 Log.d("info", "loadMoreMessages()");
 
                 if (!hasLoadedMore) {
@@ -127,10 +127,10 @@ public class MainActivity extends AppCompatActivity {
                         messages.add(getRandomMessage());
                     messages.add(generalTextMessage);
                     Log.d("info", "loadMoreMessages() returns");
-                    return messages;
+                    slyceMessagingFragment.addLoadedMessages(messages);
                 } else {
                     slyceMessagingFragment.setMoreMessagesExist(false);
-                    return new ArrayList<>();
+                    slyceMessagingFragment.addLoadedMessages(new ArrayList<Message>());
                 }
             }
         });
