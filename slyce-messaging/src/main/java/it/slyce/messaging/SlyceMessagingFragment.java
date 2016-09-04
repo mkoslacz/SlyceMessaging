@@ -168,7 +168,9 @@ public class SlyceMessagingFragment extends Fragment implements OnClickListener 
     }
 
     public long getLastMessageTimestamp(){
-        if (mMessageItems == null || mMessageItems.isEmpty()) return 0;
+        if (mMessageItems == null ||
+                mMessageItems.isEmpty() ||
+                mMessageItems.get(0).getMessage() == null) return 0;
         else return mMessageItems.get(0).getMessage().getDate();
     }
 
