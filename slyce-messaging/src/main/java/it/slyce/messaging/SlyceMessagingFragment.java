@@ -333,6 +333,7 @@ public class SlyceMessagingFragment extends Fragment implements OnClickListener 
     }
 
     private void updateTimestampAtValue(final int i) {
+        if (getActivity() == null) return;
         getActivity().runOnUiThread(new Runnable() {
             @Override
             public void run() {
