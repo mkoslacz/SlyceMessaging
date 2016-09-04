@@ -106,6 +106,20 @@ public class SlyceMessagingFragment extends Fragment implements OnClickListener 
         }
     }
 
+    public void showLoading(){
+        mMessages.add(new SpinnerMessage());
+        replaceMessages(mMessages);
+    }
+
+    public void hideLoading(){
+        int lastMessageIndex = mMessages.size() - 1;
+        if (mMessages.get(lastMessageIndex) instanceof SpinnerMessage) {
+            mMessages.remove(lastMessageIndex);
+            mMessageItems.remove(lastMessageIndex);
+            mRecyclerAdapter.notifyItemRemoved(lastMessageIndex);
+        }
+    }
+
     public void setMoreMessagesExist(boolean moreMessagesExist) {
         if (this.moreMessagesExist == moreMessagesExist)
             return;
