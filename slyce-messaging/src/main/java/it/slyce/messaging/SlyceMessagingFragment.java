@@ -106,20 +106,6 @@ public class SlyceMessagingFragment extends Fragment implements OnClickListener 
         }
     }
 
-    public void showLoading(){
-        mMessages.add(new SpinnerMessage());
-        replaceMessages(mMessages);
-    }
-
-    public void hideLoading(){
-        int lastMessageIndex = mMessages.size() - 1;
-        if (mMessages.get(lastMessageIndex) instanceof SpinnerMessage) {
-            mMessages.remove(lastMessageIndex);
-            mMessageItems.remove(lastMessageIndex);
-            mRecyclerAdapter.notifyItemRemoved(lastMessageIndex);
-        }
-    }
-
     public void setMoreMessagesExist(boolean moreMessagesExist) {
         if (this.moreMessagesExist == moreMessagesExist)
             return;
@@ -128,12 +114,12 @@ public class SlyceMessagingFragment extends Fragment implements OnClickListener 
             addSpinner();
         else
             removeSpinner();
-        loadMoreMessagesIfNecessary();
+//        loadMoreMessagesIfNecessary();
     }
 
     public void setLoadMoreMessagesListener(LoadMoreMessagesListener loadMoreMessagesListener) {
         this.loadMoreMessagesListener = loadMoreMessagesListener;
-        loadMoreMessagesIfNecessary();
+//        loadMoreMessagesIfNecessary();
     }
 
     public void setUserClicksAvatarPictureListener(UserClicksAvatarPictureListener userClicksAvatarPictureListener) {
@@ -182,10 +168,10 @@ public class SlyceMessagingFragment extends Fragment implements OnClickListener 
     }
 
     public long getLastMessageTimestamp(){
-        if (mMessageItems == null ||
-                mMessageItems.isEmpty() ||
-                mMessageItems.get(0).getMessage() == null) return 0;
-        else return mMessageItems.get(0).getMessage().getDate();
+        if (mMessages == null ||
+                mMessages.isEmpty() ||
+                mMessages.get(0) == null) return 0;
+        else return mMessages.get(0).getDate();
     }
 
     @Override
@@ -245,7 +231,7 @@ public class SlyceMessagingFragment extends Fragment implements OnClickListener 
         mRefresher = new Refresher(false);
         setStyle(R.style.MyTheme);
 
-        loadMoreMessagesIfNecessary();
+//        loadMoreMessagesIfNecessary();
         startLoadMoreMessagesListener();
 
         if (ContextCompat.checkSelfPermission(getActivity().getApplicationContext(),
@@ -307,13 +293,16 @@ public class SlyceMessagingFragment extends Fragment implements OnClickListener 
     }
 
     private void loadMoreMessages() {
+        setLoadMoreMessagesState();
+        loadMoreMessagesListener.loadMoreMessages();
+    }
+
+    public void setLoadMoreMessagesState() {
         mRefresher.setIsRefreshing(true);
-        spinnerExists = moreMessagesExist && mMessages.get(0) instanceof SpinnerMessage;
+        spinnerExists = moreMessagesExist && !mMessages.isEmpty() && mMessages.get(0) instanceof SpinnerMessage;
         if (spinnerExists) {
             mMessages.remove(0);
         }
-
-        loadMoreMessagesListener.loadMoreMessages();
     }
 
     public void addLoadedMessages(List<Message> messages) {
