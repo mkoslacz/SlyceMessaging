@@ -22,7 +22,6 @@ import it.slyce.messaging.message.messageItem.MessageViewHolder;
  */
 public class MessageTextItem extends MessageItem {
     private Context context;
-    private String avatarUrl;
 
     public MessageTextItem(TextMessage textMessage, Context context) {
         super(textMessage);
@@ -40,6 +39,7 @@ public class MessageTextItem extends MessageItem {
             String date = DateUtils.getTimestamp(message.getDate());
             String text = ((TextMessage)message).getText();
             this.avatarUrl = message.getAvatarUrl();
+            this.avatarDrawable = message.getAvatarDrawable();
             this.initials = message.getInitials();
 
             // Populate views with content
@@ -70,10 +70,14 @@ public class MessageTextItem extends MessageItem {
             });
 
             if (isFirstConsecutiveMessageFromSource) {
-                Glide.with(context).load(avatarUrl).into(messageTextViewHolder.avatar);
+                if (avatarUrl != null && !avatarUrl.isEmpty()) {
+                    Glide.with(context).load(avatarUrl).into(messageTextViewHolder.avatar);
+                } else if (avatarDrawable != null) {
+                    messageTextViewHolder.avatar.setImageDrawable(avatarDrawable);
+                }
             }
 
-            messageTextViewHolder.avatar.setVisibility(isFirstConsecutiveMessageFromSource && !TextUtils.isEmpty(avatarUrl) ? View.VISIBLE : View.INVISIBLE);
+            messageTextViewHolder.avatar.setVisibility(isFirstConsecutiveMessageFromSource && (!TextUtils.isEmpty(avatarUrl) || avatarDrawable != null) ? View.VISIBLE : View.INVISIBLE);
             messageTextViewHolder.avatarContainer.setVisibility(isFirstConsecutiveMessageFromSource ? View.VISIBLE : View.INVISIBLE);
             messageTextViewHolder.carrot.setVisibility(isFirstConsecutiveMessageFromSource ? View.VISIBLE : View.INVISIBLE);
             messageTextViewHolder.initials.setVisibility(isFirstConsecutiveMessageFromSource && TextUtils.isEmpty(avatarUrl) ? View.VISIBLE : View.GONE);

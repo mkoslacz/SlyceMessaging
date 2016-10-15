@@ -19,7 +19,12 @@ public class ReplaceMessagesTask extends AsyncTask {
     private Refresher mRefresher;
     private int upTo;
 
-    public ReplaceMessagesTask(List<Message> messages, List<MessageItem> messageitems, MessageRecyclerAdapter mRecyclerAdapter, Context context, Refresher refresher, int upTo) {
+    public ReplaceMessagesTask(List<Message> messages,
+                               List<MessageItem> messageitems,
+                               MessageRecyclerAdapter mRecyclerAdapter,
+                               Context context,
+                               Refresher refresher,
+                               int upTo) {
         this.mMessages = messages;
         this.mRecyclerAdapter = mRecyclerAdapter;
         this.upTo = upTo;
@@ -36,17 +41,23 @@ public class ReplaceMessagesTask extends AsyncTask {
 
     @Override
     protected Object doInBackground(Object[] objects) {
+        if (isCancelled()) return null;
         for (int i = mMessageItems.size() - 1; i >= 0; i--) {
+            if (isCancelled()) return null;
             mMessageItems.remove(i);
         }
 
+        if (isCancelled()) return null;
         for (Message message : mMessages) {
+            if (isCancelled()) return null;
             if (context == null)
                 return null;
             mMessageItems.add(message.toMessageItem(context)); // this call is why we need the AsyncTask
         }
 
+        if (isCancelled()) return null;
         for (int i = 0; i < mMessageItems.size(); i++) {
+            if (isCancelled()) return null;
             MessageUtils.markMessageItemAtIndexIfFirstOrLastFromSource(i, mMessageItems);
         }
 

@@ -6,7 +6,9 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.TypedArray;
 import android.graphics.Color;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
@@ -59,6 +61,8 @@ import it.slyce.messaging.view.ViewUtils;
  */
 public class SlyceMessagingFragment extends Fragment implements OnClickListener {
 
+    private static final String TAG = "SlyceMessagingFragment";
+
     private static final int START_RELOADING_DATA_AT_SCROLL_VALUE = 5000; // TODO: maybe change this? make it customizable?
 
     private EditText mEntryField;
@@ -81,6 +85,10 @@ public class SlyceMessagingFragment extends Fragment implements OnClickListener 
     private long recentUpdatedTime;
     private boolean moreMessagesExist;
     private boolean spinnerExists;
+    private ReplaceMessagesTask mReplaceMessagesTask;
+    private AddNewMessageTask mAddNewMessageTask;
+    private Runnable mUpdateTimestampsTask;
+    private Drawable defaultAvatarDrawable;
 
     public void setPictureButtonVisible(final boolean bool) {
         if (getActivity() != null)
@@ -130,6 +138,10 @@ public class SlyceMessagingFragment extends Fragment implements OnClickListener 
         this.defaultAvatarUrl = defaultAvatarUrl;
     }
 
+    public void setDefaultAvatarDrawable(Drawable defaultAvatarDrawable) {
+        this.defaultAvatarDrawable = defaultAvatarDrawable;
+    }
+
     public void setDefaultDisplayName(String defaultDisplayName) {
         this.defaultDisplayName = defaultDisplayName;
     }
@@ -153,8 +165,19 @@ public class SlyceMessagingFragment extends Fragment implements OnClickListener 
     }
 
     public void addNewMessages(List<Message> messages) {
+        Log.d(TAG, "addNewMessages: run");
         mMessages.addAll(messages);
-        new AddNewMessageTask(messages, mMessageItems, mRecyclerAdapter, mRecyclerView, getActivity().getApplicationContext(), customSettings).execute();
+        if (mReplaceMessagesTask.getStatus().equals(AsyncTask.Status.RUNNING)) {
+            stopReplacingMessages();
+        }
+        mAddNewMessageTask = new AddNewMessageTask(messages, mMessageItems, mRecyclerAdapter, mRecyclerView, getActivity().getApplicationContext(), customSettings);
+        mAddNewMessageTask.execute();
+    }
+
+    public void stopAddingNewMessages(){
+        if (mAddNewMessageTask != null) {
+            mAddNewMessageTask.cancel(true);
+        }
     }
 
     public void addNewMessage(Message message) {
@@ -200,7 +223,8 @@ public class SlyceMessagingFragment extends Fragment implements OnClickListener 
         mLinearLayoutManager = new LinearLayoutManager(this.getActivity().getApplicationContext()){
             @Override
             public boolean canScrollVertically() {
-                return !mRefresher.isRefreshing();
+//                return !mRefresher.isRefreshing();
+                return true;
             }
 
             @Override
@@ -216,14 +240,14 @@ public class SlyceMessagingFragment extends Fragment implements OnClickListener 
         // Setup recycler view
         mRecyclerView.setLayoutManager(mLinearLayoutManager);
         mRecyclerView.setAdapter(mRecyclerAdapter);
-        mRecyclerView.setOnTouchListener(
-                new View.OnTouchListener() {
-                    @Override
-                    public boolean onTouch(View v, MotionEvent event) {
-                        return mRefresher.isRefreshing();
-                    }
-                }
-        );
+//        mRecyclerView.setOnTouchListener(
+//                new View.OnTouchListener() {
+//                    @Override
+//                    public boolean onTouch(View v, MotionEvent event) {
+//                        return mRefresher.isRefreshing();
+//                    }
+//                }
+//        );
 
         startUpdateTimestampsThread();
         startHereWhenUpdate = 0;
@@ -245,9 +269,13 @@ public class SlyceMessagingFragment extends Fragment implements OnClickListener 
 
     private void startUpdateTimestampsThread() {
         ScheduledExecutorService scheduleTaskExecutor = Executors.newScheduledThreadPool(1);
-        scheduleTaskExecutor.scheduleAtFixedRate(new Runnable() {
+        mUpdateTimestampsTask = new Runnable() {
             @Override
             public void run() {
+                Log.d(TAG, "startUpdateTimestampsThread: run");
+                if (mReplaceMessagesTask.getStatus().equals(AsyncTask.Status.RUNNING) ||
+                        mReplaceMessagesTask.getStatus().equals(AsyncTask.Status.RUNNING)) return;
+
                 for (int i = startHereWhenUpdate; i < mMessages.size() && i < mMessageItems.size(); i++) {
                     try {
                         MessageItem messageItem = mMessageItems.get(i);
@@ -264,8 +292,10 @@ public class SlyceMessagingFragment extends Fragment implements OnClickListener 
                     }
                 }
             }
-        }, 0, 62, TimeUnit.SECONDS);
+        };
+        scheduleTaskExecutor.scheduleAtFixedRate(mUpdateTimestampsTask, 0, 62, TimeUnit.SECONDS);
     }
+
 
     private void startLoadMoreMessagesListener() {
         if (Build.VERSION.SDK_INT >= 23)
@@ -322,8 +352,18 @@ public class SlyceMessagingFragment extends Fragment implements OnClickListener 
     }
 
     private void replaceMessages(List<Message> messages, int upTo) {
+        Log.d(TAG, "replaceMessages: run");
+        stopReplacingMessages();
         if (getActivity() != null) {
-            new ReplaceMessagesTask(messages, mMessageItems, mRecyclerAdapter, getActivity().getApplicationContext(), mRefresher, upTo).execute();
+            mReplaceMessagesTask = new ReplaceMessagesTask(messages, mMessageItems, mRecyclerAdapter, getActivity().getApplicationContext(), mRefresher, upTo);
+            mReplaceMessagesTask.execute();
+        }
+    }
+
+    private void stopReplacingMessages(){
+        if (mReplaceMessagesTask != null) {
+            boolean success = mReplaceMessagesTask.cancel(true);
+            Log.d(TAG, String.format("stopReplacingMessages: %b", success));
         }
     }
 
@@ -438,6 +478,7 @@ public class SlyceMessagingFragment extends Fragment implements OnClickListener 
         TextMessage message = new TextMessage();
         message.setDate(System.currentTimeMillis());
         message.setAvatarUrl(defaultAvatarUrl);
+        message.setAvatarDrawable(defaultAvatarDrawable);
         message.setSource(MessageSource.LOCAL_USER);
         message.setDisplayName(defaultDisplayName);
         message.setText(text);

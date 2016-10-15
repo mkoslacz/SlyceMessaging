@@ -19,5 +19,9 @@
     <color name="text_pink">#F21E75</color>
     <color name="text_blue">#202089</color>
     <color name="text_blue_lightest">#AAAAFF</color>
+    <color name="orange">#E0623E</color>
+    <color name="green">#60C4AC</color>
+
+
 
 </resources>

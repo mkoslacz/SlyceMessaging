@@ -40,6 +40,7 @@ public abstract class MessageMediaItem extends MessageItem {
             date = DateUtils.getTimestamp(message.getDate());
             final String mediaUrl = getMediaMessage().getUrl();
             this.avatarUrl = message.getAvatarUrl();
+            this.avatarDrawable = message.getAvatarDrawable();
 
             // Populate views with content
             messageMediaViewHolder.timestamp.setText(date != null ? date : "");
@@ -49,7 +50,11 @@ public abstract class MessageMediaItem extends MessageItem {
             messageMediaViewHolder.media.setImageUrlToLoadOnLayout(mediaUrl);
 
             if (isFirstConsecutiveMessageFromSource) {
-                Glide.with(context).load(avatarUrl).into(messageMediaViewHolder.avatar);
+                if (avatarUrl != null && !avatarUrl.isEmpty()) {
+                    Glide.with(context).load(avatarUrl).into(messageMediaViewHolder.avatar);
+                } else if (avatarDrawable != null) {
+                    messageMediaViewHolder.avatar.setImageDrawable(avatarDrawable);
+                }
             }
 
             messageViewHolder.avatar.setOnClickListener(new View.OnClickListener() {

@@ -14,8 +14,7 @@
         android:layout_height="wrap_content"
         android:layout_alignParentLeft="true"
         android:layout_alignParentTop="true"
-        android:layout_marginRight="16dp"
-        android:background="@drawable/shape_oval_white">
+        android:layout_marginRight="16dp">
 
         <it.slyce.messaging.view.text.FontTextView
             android:id="@+id/message_scout_media_text_view_initials"
@@ -25,7 +24,7 @@
             android:gravity="center"
             android:maxLines="1"
             android:textAllCaps="true"
-            android:textColor="@color/text_white"
+            android:textColor="@color/background_black"
             android:textSize="16sp"
             app:font="museo_sans_500.otf"
             tools:text="JF" />
