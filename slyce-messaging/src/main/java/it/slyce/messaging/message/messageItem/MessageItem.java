@@ -1,5 +1,7 @@
 package it.slyce.messaging.message.messageItem;
 
+import android.graphics.drawable.Drawable;
+
 import it.slyce.messaging.message.Message;
 import it.slyce.messaging.message.MessageSource;
 import it.slyce.messaging.utils.DateUtils;
@@ -13,6 +15,7 @@ public abstract class MessageItem {
     protected boolean isLastConsecutiveMessageFromSource;
 
     protected String avatarUrl;
+    protected Drawable avatarDrawable;
     protected String initials;
     protected Message message;
     protected String date;

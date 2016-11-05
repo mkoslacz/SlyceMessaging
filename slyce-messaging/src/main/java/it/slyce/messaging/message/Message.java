@@ -1,6 +1,7 @@
 package it.slyce.messaging.message;
 
 import android.content.Context;
+import android.graphics.drawable.Drawable;
 
 import it.slyce.messaging.message.messageItem.MessageItem;
 
@@ -10,6 +11,7 @@ import it.slyce.messaging.message.messageItem.MessageItem;
 public abstract class Message {
     long date;
     MessageSource source;
+    Drawable avatarDrawable;
     String avatarUrl;
     String displayName;
     String userId;
@@ -29,6 +31,14 @@ public abstract class Message {
 
     public void setSource(MessageSource source) {
         this.source = source;
+    }
+
+    public Drawable getAvatarDrawable() {
+        return avatarDrawable;
+    }
+
+    public void setAvatarDrawable(Drawable avatarDrawable) {
+        this.avatarDrawable = avatarDrawable;
     }
 
     public String getAvatarUrl() {

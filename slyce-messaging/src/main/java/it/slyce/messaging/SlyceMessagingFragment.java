@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.TypedArray;
 import android.graphics.Color;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -81,6 +82,7 @@ public class SlyceMessagingFragment extends Fragment implements OnClickListener 
     private long recentUpdatedTime;
     private boolean moreMessagesExist;
     private boolean spinnerExists;
+    private Drawable defaultAvatarDrawable;
 
     public void setPictureButtonVisible(final boolean bool) {
         if (getActivity() != null)
@@ -128,6 +130,10 @@ public class SlyceMessagingFragment extends Fragment implements OnClickListener 
 
     public void setDefaultAvatarUrl(String defaultAvatarUrl) {
         this.defaultAvatarUrl = defaultAvatarUrl;
+    }
+
+    public void setDefaultAvatarDrawable(Drawable defaultAvatarDrawable) {
+        this.defaultAvatarDrawable = defaultAvatarDrawable;
     }
 
     public void setDefaultDisplayName(String defaultDisplayName) {
@@ -438,6 +444,7 @@ public class SlyceMessagingFragment extends Fragment implements OnClickListener 
         TextMessage message = new TextMessage();
         message.setDate(System.currentTimeMillis());
         message.setAvatarUrl(defaultAvatarUrl);
+        message.setAvatarDrawable(defaultAvatarDrawable);
         message.setSource(MessageSource.LOCAL_USER);
         message.setDisplayName(defaultDisplayName);
         message.setText(text);
