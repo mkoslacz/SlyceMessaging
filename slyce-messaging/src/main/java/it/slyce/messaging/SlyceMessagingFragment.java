@@ -200,6 +200,13 @@ public class SlyceMessagingFragment extends Fragment implements OnClickListener 
         ImageView mSnapButton = (ImageView) rootView.findViewById(R.id.slyce_messaging_image_view_snap);
         mRecyclerView = (RecyclerView) rootView.findViewById(R.id.slyce_messaging_recycler_view);
 
+        mEntryField.setOnFocusChangeListener((view, b) -> {
+            if (b) mRecyclerView.smoothScrollToPosition(mRecyclerAdapter.getItemCount() - 1);
+        });
+
+        mEntryField.setOnClickListener(view ->
+                mRecyclerView.smoothScrollToPosition(mRecyclerAdapter.getItemCount() - 1));
+
         // Add interfaces
         mSendButton.setOnClickListener(this);
         mSnapButton.setOnClickListener(this);
