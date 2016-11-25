@@ -29,14 +29,6 @@ import android.widget.ImageView;
 import com.commonsware.cwac.cam2.CameraActivity;
 import com.commonsware.cwac.cam2.ZoomStyle;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-
 import it.slyce.messaging.listeners.LoadMoreMessagesListener;
 import it.slyce.messaging.listeners.UserClicksAvatarPictureListener;
 import it.slyce.messaging.listeners.UserSendsMessageListener;
@@ -54,6 +46,16 @@ import it.slyce.messaging.utils.ScrollUtils;
 import it.slyce.messaging.utils.asyncTasks.AddNewMessageTask;
 import it.slyce.messaging.utils.asyncTasks.ReplaceMessagesTask;
 import it.slyce.messaging.view.ViewUtils;
+
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+
+import rx.Observable;
+import rx.schedulers.Schedulers;
+import rx.subjects.ReplaySubject;
 
 /**
  * Created by John C. Hunchar on 1/12/16.
@@ -83,6 +85,7 @@ public class SlyceMessagingFragment extends Fragment implements OnClickListener 
     private boolean moreMessagesExist;
     private boolean spinnerExists;
     private Drawable defaultAvatarDrawable;
+    private ReplaySubject<MessagingEvent> actionsQueue = ReplaySubject.create();
 
     public void setPictureButtonVisible(final boolean bool) {
         if (getActivity() != null)
@@ -159,8 +162,10 @@ public class SlyceMessagingFragment extends Fragment implements OnClickListener 
     }
 
     public void addNewMessages(List<Message> messages) {
-        mMessages.addAll(messages);
-        new AddNewMessageTask(messages, mMessageItems, mRecyclerAdapter, mRecyclerView, getActivity().getApplicationContext(), customSettings).execute();
+        actionsQueue.onNext(new MessagingEvent.Builder()
+                .withActionType(MessagingEvent.ADD_NEW_MESSGES)
+                .withMessages(messages)
+                .build());
     }
 
     public void addNewMessage(Message message) {
@@ -231,6 +236,36 @@ public class SlyceMessagingFragment extends Fragment implements OnClickListener 
                 }
         );
 
+        actionsQueue.subscribe(messagingEvent -> {
+            switch (messagingEvent.getActionType()) {
+                case MessagingEvent.ADD_NEW_MESSGES: // TODO: 05.11.2016 move to background
+                    if (getActivity() != null) {
+                        mMessages.addAll(messagingEvent.getMessages());
+                        AddNewMessageTask addNewMessageTask = new AddNewMessageTask(
+                                messagingEvent.getMessages(), mMessageItems,
+                                mRecyclerAdapter, mRecyclerView,
+                                getActivity().getApplicationContext(), customSettings);
+                        addNewMessageTask.doInBackground();
+                        addNewMessageTask.onPostExecute();
+                    }
+                    break;
+                case MessagingEvent.REPLACE_MESSAGES: // TODO: 05.11.2016 move to background
+                    if (getActivity() != null) {
+                        ReplaceMessagesTask replaceMessagesTask = new ReplaceMessagesTask(
+                                messagingEvent.getMessages(),
+                                mMessageItems, mRecyclerAdapter,
+                                getActivity().getApplicationContext(),
+                                mRefresher, messagingEvent.getUpTo());
+                        replaceMessagesTask.onPreExecute();
+                        replaceMessagesTask.doInBackground();
+                        replaceMessagesTask.onPostExecute();
+                    }
+                    break;
+                case MessagingEvent.UPDATE_TIMESTAMPS:
+                    updateTimestamps();
+                    break;
+            }
+        });
         startUpdateTimestampsThread();
         startHereWhenUpdate = 0;
         recentUpdatedTime = 0;
@@ -250,27 +285,30 @@ public class SlyceMessagingFragment extends Fragment implements OnClickListener 
     }
 
     private void startUpdateTimestampsThread() {
-        ScheduledExecutorService scheduleTaskExecutor = Executors.newScheduledThreadPool(1);
-        scheduleTaskExecutor.scheduleAtFixedRate(new Runnable() {
-            @Override
-            public void run() {
-                for (int i = startHereWhenUpdate; i < mMessages.size() && i < mMessageItems.size(); i++) {
-                    try {
-                        MessageItem messageItem = mMessageItems.get(i);
-                        Message message = messageItem.getMessage();
-                        if (DateUtils.dateNeedsUpdated(message.getDate(), messageItem.getDate())) {
-                            messageItem.updateDate(message.getDate());
-                            updateTimestampAtValue(i);
-                        } else if (i == startHereWhenUpdate) {
-                            i++;
-                        }
-                    } catch (RuntimeException exception) {
-                        Log.d("debug", exception.getMessage());
-                        exception.printStackTrace();
-                    }
+        Observable.interval(1, 62, TimeUnit.SECONDS, Schedulers.io())
+                .subscribe(aLong ->
+                        actionsQueue.onNext(new MessagingEvent.Builder()
+                                .withActionType(MessagingEvent.UPDATE_TIMESTAMPS)
+                                .build()));
+    }
+
+    // can run in bckgnd thread
+    private void updateTimestamps(){
+        for (int i = startHereWhenUpdate; i < mMessages.size() && i < mMessageItems.size(); i++) {
+            try {
+                MessageItem messageItem = mMessageItems.get(i);
+                Message message = messageItem.getMessage();
+                if (DateUtils.dateNeedsUpdated(message.getDate(), messageItem.getDate())) {
+                    messageItem.updateDate(message.getDate());
+                    updateTimestampAtValue(i);
+                } else if (i == startHereWhenUpdate) {
+                    i++;
                 }
+            } catch (RuntimeException exception) {
+                Log.d("debug", exception.getMessage());
+                exception.printStackTrace();
             }
-        }, 0, 62, TimeUnit.SECONDS);
+        }
     }
 
     private void startLoadMoreMessagesListener() {
@@ -328,9 +366,11 @@ public class SlyceMessagingFragment extends Fragment implements OnClickListener 
     }
 
     private void replaceMessages(List<Message> messages, int upTo) {
-        if (getActivity() != null) {
-            new ReplaceMessagesTask(messages, mMessageItems, mRecyclerAdapter, getActivity().getApplicationContext(), mRefresher, upTo).execute();
-        }
+        actionsQueue.onNext(new MessagingEvent.Builder()
+                .withActionType(MessagingEvent.REPLACE_MESSAGES)
+                .withMessages(messages)
+                .withUpTo(upTo)
+                .build());
     }
 
     private boolean shouldReloadData() {

@@ -18,7 +18,7 @@ import it.slyce.messaging.utils.CustomSettings;
 import it.slyce.messaging.utils.MessageUtils;
 import it.slyce.messaging.utils.ScrollUtils;
 
-public class AddNewMessageTask extends AsyncTask {
+public class AddNewMessageTask {
     private List<Message> messages;
     private List<MessageItem> mMessageItems;
     private MessageRecyclerAdapter mRecyclerAdapter;
@@ -42,8 +42,7 @@ public class AddNewMessageTask extends AsyncTask {
         this.customSettings = customSettings;
     }
 
-    @Override
-    protected Object doInBackground(Object[] objects) {
+    public Object doInBackground() {
         this.rangeStartingPoint = mMessageItems.size() - 1;
         for (Message message : messages) {
             if (context == null) {
@@ -59,15 +58,12 @@ public class AddNewMessageTask extends AsyncTask {
         return null;
     }
 
-    @Override
-    protected void onPostExecute(Object o) {
-        super.onPostExecute(o);
-        if (o != null)
-            return;
+    public void onPostExecute() {
         boolean isAtBottom = !mRecyclerView.canScrollVertically(1);
         boolean isAtTop = !mRecyclerView.canScrollVertically(-1);
         mRecyclerAdapter.notifyItemRangeInserted(rangeStartingPoint + 1, messages.size() - rangeStartingPoint - 1);
         mRecyclerAdapter.notifyItemChanged(rangeStartingPoint);
+        mRecyclerAdapter.notifyDataSetChanged(); // FIXME: 13.11.2016 methods above doesnt give appropriate effect
         if (isAtBottom || messages.get(messages.size() - 1).getSource() == MessageSource.LOCAL_USER)
             mRecyclerView.scrollToPosition(mRecyclerAdapter.getItemCount() - 1);
         else {

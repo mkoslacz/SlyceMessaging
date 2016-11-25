@@ -1,7 +1,6 @@
 package it.slyce.messaging.utils.asyncTasks;
 
 import android.content.Context;
-import android.os.AsyncTask;
 
 import java.util.List;
 
@@ -11,7 +10,7 @@ import it.slyce.messaging.message.messageItem.MessageRecyclerAdapter;
 import it.slyce.messaging.utils.MessageUtils;
 import it.slyce.messaging.utils.Refresher;
 
-public class ReplaceMessagesTask extends AsyncTask {
+public class ReplaceMessagesTask {
     private List<Message> mMessages;
     private List<MessageItem> mMessageItems;
     private MessageRecyclerAdapter mRecyclerAdapter;
@@ -28,14 +27,11 @@ public class ReplaceMessagesTask extends AsyncTask {
         this.context = context;
     }
 
-    @Override
-    protected void onPreExecute() {
-        super.onPreExecute();
+    public void onPreExecute() {
         mRefresher.setIsRefreshing(true);
     }
 
-    @Override
-    protected Object doInBackground(Object[] objects) {
+    public Object doInBackground() {
         for (int i = mMessageItems.size() - 1; i >= 0; i--) {
             mMessageItems.remove(i);
         }
@@ -53,14 +49,7 @@ public class ReplaceMessagesTask extends AsyncTask {
         return null;
     }
 
-    @Override
-    protected void onPostExecute(Object o) {
-        super.onPostExecute(o);
-
-        if (o != null) {
-            return;
-        }
-
+    public void onPostExecute() {
 
         if (upTo >= 0 && upTo < mMessageItems.size()) {
             mRecyclerAdapter.notifyItemRangeInserted(0, upTo);
