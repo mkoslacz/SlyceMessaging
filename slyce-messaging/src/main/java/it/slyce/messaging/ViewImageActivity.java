@@ -29,7 +29,7 @@ public class ViewImageActivity extends AppCompatActivity {
                 Intent sendIntent = new Intent();
                 sendIntent.setAction(Intent.ACTION_SEND);
                 sendIntent.putExtra(Intent.EXTRA_STREAM, Uri.parse(url));
-                sendIntent.setType("image/jpeg");
+                sendIntent.setType("image/*");
                 startActivity(sendIntent);
                 return false;
             }
