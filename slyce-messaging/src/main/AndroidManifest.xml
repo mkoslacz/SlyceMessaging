@@ -20,8 +20,8 @@
             android:icon="@mipmap/ic_camera_photo_black"
             android:label="Camera"/>
 
-        <activity android:name="it.slyce.messaging.ViewImageActivity">
-        </activity>
+        <activity android:name="it.slyce.messaging.ViewImageActivity"
+                  android:theme="@style/Theme.AppCompat.NoActionBar"/>
 
     </application>
 
