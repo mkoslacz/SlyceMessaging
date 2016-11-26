@@ -17,6 +17,7 @@ import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
+import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -206,6 +207,10 @@ public class SlyceMessagingFragment extends Fragment implements OnClickListener 
 
         mEntryField.setOnClickListener(view ->
                 scrollToBottom());
+
+        mEntryField.setMaxLines(1);
+        mEntryField.setVerticalScrollBarEnabled(true);
+        mEntryField.setMovementMethod(new ScrollingMovementMethod());
 
         // Add interfaces
         mSendButton.setOnClickListener(this);
