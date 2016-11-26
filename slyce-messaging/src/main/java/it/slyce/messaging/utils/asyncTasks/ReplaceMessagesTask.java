@@ -4,13 +4,14 @@ import android.content.Context;
 
 import java.util.List;
 
+import it.slyce.messaging.SlyceMessagingFragment;
 import it.slyce.messaging.message.Message;
 import it.slyce.messaging.message.messageItem.MessageItem;
 import it.slyce.messaging.message.messageItem.MessageRecyclerAdapter;
 import it.slyce.messaging.utils.MessageUtils;
 import it.slyce.messaging.utils.Refresher;
 
-public class ReplaceMessagesTask {
+public class ReplaceMessagesTask implements SlyceMessagingFragment.PostExecute {
     private List<Message> mMessages;
     private List<MessageItem> mMessageItems;
     private MessageRecyclerAdapter mRecyclerAdapter;
@@ -49,6 +50,7 @@ public class ReplaceMessagesTask {
         return null;
     }
 
+    @Override
     public void onPostExecute() {
 
         if (upTo >= 0 && upTo < mMessageItems.size()) {

@@ -55,6 +55,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import rx.Observable;
+import rx.android.schedulers.AndroidSchedulers;
 import rx.schedulers.Schedulers;
 import rx.subjects.ReplaySubject;
 
@@ -248,36 +249,42 @@ public class SlyceMessagingFragment extends Fragment implements OnClickListener 
                 }
         );
 
-        actionsQueue.subscribe(messagingEvent -> {
-            switch (messagingEvent.getActionType()) {
-                case MessagingEvent.ADD_NEW_MESSGES: // TODO: 05.11.2016 move to background
-                    if (getActivity() != null) {
-                        mMessages.addAll(messagingEvent.getMessages());
-                        AddNewMessageTask addNewMessageTask = new AddNewMessageTask(
-                                messagingEvent.getMessages(), mMessageItems,
-                                mRecyclerAdapter, mRecyclerView,
-                                getActivity().getApplicationContext(), customSettings);
-                        addNewMessageTask.doInBackground();
-                        addNewMessageTask.onPostExecute();
+        // TODO: 26.11.2016 make sure that all work before subscribe is done on bckgnd thread
+        actionsQueue
+                .observeOn(AndroidSchedulers.mainThread()) // TODO: 26.11.2016 wtf, why doesn't it work if it's put after map method below? 
+                .map(messagingEvent -> {
+                    switch (messagingEvent.getActionType()) {
+                        case MessagingEvent.ADD_NEW_MESSGES:
+                            if (getActivity() != null) {
+                                mMessages.addAll(messagingEvent.getMessages());
+                                AddNewMessageTask addNewMessageTask = new AddNewMessageTask(
+                                        messagingEvent.getMessages(), mMessageItems,
+                                        mRecyclerAdapter, mRecyclerView,
+                                        getActivity().getApplicationContext(), customSettings);
+                                addNewMessageTask.doInBackground();
+                                return (PostExecute) addNewMessageTask;
+                            } else return null;
+                        case MessagingEvent.REPLACE_MESSAGES:
+                            if (getActivity() != null) {
+                                ReplaceMessagesTask replaceMessagesTask = new ReplaceMessagesTask(
+                                        messagingEvent.getMessages(),
+                                        mMessageItems, mRecyclerAdapter,
+                                        getActivity().getApplicationContext(),
+                                        mRefresher, messagingEvent.getUpTo());
+                                replaceMessagesTask.onPreExecute();
+                                replaceMessagesTask.doInBackground();
+                                return (PostExecute) replaceMessagesTask;
+                            } else return null;
+                        case MessagingEvent.UPDATE_TIMESTAMPS:
+                            updateTimestamps();
+                            return null;
+                        default:
+                            return null;
                     }
-                    break;
-                case MessagingEvent.REPLACE_MESSAGES: // TODO: 05.11.2016 move to background
-                    if (getActivity() != null) {
-                        ReplaceMessagesTask replaceMessagesTask = new ReplaceMessagesTask(
-                                messagingEvent.getMessages(),
-                                mMessageItems, mRecyclerAdapter,
-                                getActivity().getApplicationContext(),
-                                mRefresher, messagingEvent.getUpTo());
-                        replaceMessagesTask.onPreExecute();
-                        replaceMessagesTask.doInBackground();
-                        replaceMessagesTask.onPostExecute();
-                    }
-                    break;
-                case MessagingEvent.UPDATE_TIMESTAMPS:
-                    updateTimestamps();
-                    break;
-            }
-        });
+                })
+                .subscribe(postExecute -> {
+                    if (postExecute != null) postExecute.onPostExecute();
+                });
         startUpdateTimestampsThread();
         startHereWhenUpdate = 0;
         recentUpdatedTime = 0;
@@ -402,12 +409,7 @@ public class SlyceMessagingFragment extends Fragment implements OnClickListener 
 
     private void updateTimestampAtValue(final int i) {
         if (getActivity() == null) return;
-        getActivity().runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mRecyclerAdapter.notifyItemChanged(i);
-            }
-        });
+        getActivity().runOnUiThread(() -> mRecyclerAdapter.notifyItemChanged(i));
     }
 
     private File file;
@@ -511,5 +513,9 @@ public class SlyceMessagingFragment extends Fragment implements OnClickListener 
         ScrollUtils.scrollToBottomAfterDelay(mRecyclerView, mRecyclerAdapter);
         if (listener != null)
             listener.onUserSendsTextMessage(message.getText());
+    }
+
+    public interface PostExecute {
+        void onPostExecute();
     }
 }
