@@ -201,11 +201,11 @@ public class SlyceMessagingFragment extends Fragment implements OnClickListener 
         mRecyclerView = (RecyclerView) rootView.findViewById(R.id.slyce_messaging_recycler_view);
 
         mEntryField.setOnFocusChangeListener((view, b) -> {
-            if (b) mRecyclerView.smoothScrollToPosition(mRecyclerAdapter.getItemCount() - 1);
+            if (b) scrollToBottom();
         });
 
         mEntryField.setOnClickListener(view ->
-                mRecyclerView.smoothScrollToPosition(mRecyclerAdapter.getItemCount() - 1));
+                scrollToBottom());
 
         // Add interfaces
         mSendButton.setOnClickListener(this);
@@ -289,6 +289,11 @@ public class SlyceMessagingFragment extends Fragment implements OnClickListener 
             ActivityCompat.requestPermissions(getActivity(), new String[]{Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE}, 232);
 
         return rootView;
+    }
+
+    private void scrollToBottom() {
+        int position = mRecyclerAdapter.getItemCount() - 1;
+        if (position >= 0) mRecyclerView.smoothScrollToPosition(position);
     }
 
     private void startUpdateTimestampsThread() {
