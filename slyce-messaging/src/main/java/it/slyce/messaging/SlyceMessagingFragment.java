@@ -55,6 +55,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import rx.Observable;
+import rx.Subscription;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.schedulers.Schedulers;
 import rx.subjects.ReplaySubject;
@@ -88,6 +89,7 @@ public class SlyceMessagingFragment extends Fragment implements OnClickListener 
     private boolean spinnerExists;
     private Drawable defaultAvatarDrawable;
     private ReplaySubject<MessagingEvent> actionsQueue = ReplaySubject.create();
+    private Subscription mTimestampsUpdatesSubscription;
 
     public void setPictureButtonVisible(final boolean bool) {
         if (getActivity() != null)
@@ -251,7 +253,7 @@ public class SlyceMessagingFragment extends Fragment implements OnClickListener 
 
         // TODO: 26.11.2016 make sure that all work before subscribe is done on bckgnd thread
         actionsQueue
-                .observeOn(AndroidSchedulers.mainThread()) // TODO: 26.11.2016 wtf, why doesn't it work if it's put after map method below? 
+                .observeOn(AndroidSchedulers.mainThread()) // TODO: 26.11.2016 wtf, why doesn't it work if it's put after map method below?
                 .map(messagingEvent -> {
                     switch (messagingEvent.getActionType()) {
                         case MessagingEvent.ADD_NEW_MESSGES:
@@ -303,13 +305,19 @@ public class SlyceMessagingFragment extends Fragment implements OnClickListener 
         return rootView;
     }
 
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        mTimestampsUpdatesSubscription.unsubscribe();
+    }
+
     private void scrollToBottom() {
         int position = mRecyclerAdapter.getItemCount() - 1;
         if (position >= 0) mRecyclerView.smoothScrollToPosition(position);
     }
 
     private void startUpdateTimestampsThread() {
-        Observable.interval(1, 62, TimeUnit.SECONDS, Schedulers.io())
+        mTimestampsUpdatesSubscription = Observable.interval(1, 62, TimeUnit.SECONDS, Schedulers.io())
                 .subscribe(aLong ->
                         actionsQueue.onNext(new MessagingEvent.Builder()
                                 .withActionType(MessagingEvent.UPDATE_TIMESTAMPS)
