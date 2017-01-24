@@ -100,6 +100,10 @@ dependencies {
     // RxJava
     compile 'io.reactivex:rxjava:1.2.2'
     compile 'io.reactivex:rxandroid:1.2.1'
+    compile 'com.tbruyelle.rxpermissions:rxpermissions:0.9.1@aar'
+    compile 'com.jakewharton.rxbinding:rxbinding:1.0.0'
+
+
 }
 
 // Place it at the end of the file

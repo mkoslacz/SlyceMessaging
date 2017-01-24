@@ -26,9 +26,12 @@ import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.Toast;
 
 import com.commonsware.cwac.cam2.CameraActivity;
 import com.commonsware.cwac.cam2.ZoomStyle;
+import com.jakewharton.rxbinding.view.RxView;
+import com.tbruyelle.rxpermissions.RxPermissions;
 
 import it.slyce.messaging.listeners.LoadMoreMessagesListener;
 import it.slyce.messaging.listeners.UserClicksAvatarPictureListener;
@@ -56,6 +59,7 @@ import java.util.concurrent.TimeUnit;
 
 import rx.Observable;
 import rx.Subscription;
+import rx.android.plugins.RxAndroidPlugins;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.schedulers.Schedulers;
 import rx.subjects.ReplaySubject;
@@ -201,7 +205,6 @@ public class SlyceMessagingFragment extends Fragment implements OnClickListener 
         // Setup views
         mEntryField = (EditText) rootView.findViewById(R.id.slyce_messaging_edit_text_entry_field);
         ImageView mSendButton = (ImageView) rootView.findViewById(R.id.slyce_messaging_image_view_send);
-        ImageView mSnapButton = (ImageView) rootView.findViewById(R.id.slyce_messaging_image_view_snap);
         mRecyclerView = (RecyclerView) rootView.findViewById(R.id.slyce_messaging_recycler_view);
 
         mEntryField.setOnFocusChangeListener((view, b) -> {
@@ -217,7 +220,16 @@ public class SlyceMessagingFragment extends Fragment implements OnClickListener 
 
         // Add interfaces
         mSendButton.setOnClickListener(this);
-        mSnapButton.setOnClickListener(this);
+
+
+        RxPermissions rxPermissions = new RxPermissions(getActivity()); // where this is an Activity instance
+        // Must be done during an initialization phase like onCreate
+        RxView.clicks(rootView.findViewById(R.id.slyce_messaging_image_view_snap))
+                .compose(rxPermissions.ensure(Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE))
+                .subscribe(granted -> {
+                    if (granted) chooseOrTakePhoto();
+                    else Toast.makeText(getActivity(), "Provide permissions to allow Faver to take the photo!", Toast.LENGTH_SHORT).show();
+                });
 
         // Init variables for recycler view
         mMessages = new ArrayList<>();
@@ -296,11 +308,11 @@ public class SlyceMessagingFragment extends Fragment implements OnClickListener 
 //        loadMoreMessagesIfNecessary();
         startLoadMoreMessagesListener();
 
-        if (ContextCompat.checkSelfPermission(getActivity().getApplicationContext(),
-                Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED ||
-                        ContextCompat.checkSelfPermission(getActivity().getApplicationContext(),
-                                Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED)
-            ActivityCompat.requestPermissions(getActivity(), new String[]{Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE}, 232);
+//        if (ContextCompat.checkSelfPermission(getActivity().getApplicationContext(),
+//                Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED ||
+//                        ContextCompat.checkSelfPermission(getActivity().getApplicationContext(),
+//                                Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED)
+//            ActivityCompat.requestPermissions(getActivity(), new String[]{Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE}, 232);
 
         return rootView;
     }
@@ -428,29 +440,33 @@ public class SlyceMessagingFragment extends Fragment implements OnClickListener 
         if (v.getId() == R.id.slyce_messaging_image_view_send) {
             sendUserTextMessage();
         } else if (v.getId() == R.id.slyce_messaging_image_view_snap) {
-            mEntryField.setText("");
-            final File mediaStorageDir = getActivity().getExternalFilesDir(Environment.DIRECTORY_PICTURES);
-            final File root = new File(mediaStorageDir, "SlyceMessaging");
-            root.mkdirs();
-            final String fname = "img_" + System.currentTimeMillis() + ".jpg";
-            file = new File(root, fname);
-            outputFileUri = Uri.fromFile(file);
-            Intent takePhotoIntent = new CameraActivity.IntentBuilder(getActivity().getApplicationContext())
-                    .skipConfirm()
-                    .to(this.file)
-                    .zoomStyle(ZoomStyle.SEEKBAR)
-                    .updateMediaStore()
-                    .build();
-            Intent pickPhotoIntent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-            pickPhotoIntent.setType("image/*");
-            Intent chooserIntent = Intent.createChooser(pickPhotoIntent, "Take a photo or select one from your device");
-            chooserIntent.putExtra(Intent.EXTRA_INITIAL_INTENTS, new Intent[] {takePhotoIntent});
-            try {
-                startActivityForResult(chooserIntent, 1);
-            } catch (RuntimeException exception) {
-                Log.d("debug", exception.getMessage());
-                exception.printStackTrace();
-            }
+            chooseOrTakePhoto();
+        }
+    }
+
+    private void chooseOrTakePhoto() {
+        mEntryField.setText("");
+        final File mediaStorageDir = getActivity().getExternalFilesDir(Environment.DIRECTORY_PICTURES);
+        final File root = new File(mediaStorageDir, "SlyceMessaging");
+        root.mkdirs();
+        final String fname = "img_" + System.currentTimeMillis() + ".jpg";
+        file = new File(root, fname);
+        outputFileUri = Uri.fromFile(file);
+        Intent takePhotoIntent = new CameraActivity.IntentBuilder(getActivity().getApplicationContext())
+                .skipConfirm()
+                .to(this.file)
+                .zoomStyle(ZoomStyle.SEEKBAR)
+                .updateMediaStore()
+                .build();
+        Intent pickPhotoIntent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+        pickPhotoIntent.setType("image/*");
+        Intent chooserIntent = Intent.createChooser(pickPhotoIntent, "Take a photo or select one from your device");
+        chooserIntent.putExtra(Intent.EXTRA_INITIAL_INTENTS, new Intent[] {takePhotoIntent});
+        try {
+            startActivityForResult(chooserIntent, 1);
+        } catch (RuntimeException exception) {
+            Log.d("debug", exception.getMessage());
+            exception.printStackTrace();
         }
     }
 
