@@ -265,6 +265,7 @@ public class SlyceMessagingFragment extends Fragment implements OnClickListener 
 
         // TODO: 26.11.2016 make sure that all work before subscribe is done on bckgnd thread
         actionsQueue
+                .filter(messagingEvent -> messagingEvent != null)
                 .observeOn(AndroidSchedulers.mainThread()) // TODO: 26.11.2016 wtf, why doesn't it work if it's put after map method below?
                 .map(messagingEvent -> {
                     switch (messagingEvent.getActionType()) {
@@ -298,6 +299,9 @@ public class SlyceMessagingFragment extends Fragment implements OnClickListener 
                 })
                 .subscribe(postExecute -> {
                     if (postExecute != null) postExecute.onPostExecute();
+                }, throwable -> {
+                    throwable.printStackTrace();
+                    Toast.makeText(getActivity(), throwable.getLocalizedMessage(), Toast.LENGTH_SHORT).show();
                 });
         startUpdateTimestampsThread();
         startHereWhenUpdate = 0;
