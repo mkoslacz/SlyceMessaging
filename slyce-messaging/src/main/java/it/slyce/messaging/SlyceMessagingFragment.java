@@ -95,6 +95,15 @@ public class SlyceMessagingFragment extends Fragment implements OnClickListener 
     private ReplaySubject<MessagingEvent> actionsQueue = ReplaySubject.create();
     private Subscription mTimestampsUpdatesSubscription;
 
+    public void clear(){
+        // Init variables for recycler view
+        mMessages = new ArrayList<>();
+        mMessageItems = new ArrayList<>();
+        mRecyclerAdapter = new MessageRecyclerAdapter(mMessageItems, customSettings);
+        mRecyclerView.setAdapter(mRecyclerAdapter);
+        mRecyclerAdapter.notifyDataSetChanged();
+    }
+
     public void setPictureButtonVisible(final boolean bool) {
         if (getActivity() != null)
             getActivity().runOnUiThread(new Runnable() {
