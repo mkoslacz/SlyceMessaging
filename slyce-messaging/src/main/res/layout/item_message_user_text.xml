@@ -65,6 +65,7 @@
             android:textColor="@color/text_navy"
             android:textSize="14sp"
             app:font="museo_sans_500.otf"
+            android:textColorLink="@color/text_white"
             tools:text="In need of pizza. Can you help?"/>
     </FrameLayout>
 
