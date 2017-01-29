@@ -30,6 +30,7 @@ import android.widget.Toast;
 
 import com.commonsware.cwac.cam2.CameraActivity;
 import com.commonsware.cwac.cam2.ZoomStyle;
+import com.crashlytics.android.Crashlytics;
 import com.jakewharton.rxbinding.view.RxView;
 import com.tbruyelle.rxpermissions.RxPermissions;
 
@@ -309,6 +310,7 @@ public class SlyceMessagingFragment extends Fragment implements OnClickListener 
                 .subscribe(postExecute -> {
                     if (postExecute != null) postExecute.onPostExecute();
                 }, throwable -> {
+                    Crashlytics.logException(throwable);
                     throwable.printStackTrace();
                     Toast.makeText(getActivity(), throwable.getLocalizedMessage(), Toast.LENGTH_SHORT).show();
                 });
