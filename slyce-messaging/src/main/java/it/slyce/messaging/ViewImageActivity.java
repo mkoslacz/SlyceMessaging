@@ -9,7 +9,11 @@ import android.widget.ImageView;
 
 import com.bumptech.glide.Glide;
 
+import uk.co.senab.photoview.PhotoViewAttacher;
+
 public class ViewImageActivity extends AppCompatActivity {
+
+    private PhotoViewAttacher mAttacher;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -23,16 +27,14 @@ public class ViewImageActivity extends AppCompatActivity {
             Glide.with(getApplicationContext()).load(url).into(imageView);
         }
         assert imageView != null;
-        imageView.setOnLongClickListener(new View.OnLongClickListener() {
-            @Override
-            public boolean onLongClick(View view) {
-                Intent sendIntent = new Intent();
-                sendIntent.setAction(Intent.ACTION_SEND);
-                sendIntent.putExtra(Intent.EXTRA_STREAM, Uri.parse(url));
-                sendIntent.setType("image/*");
-                startActivity(sendIntent);
-                return false;
-            }
+        mAttacher = new PhotoViewAttacher(imageView);
+        imageView.setOnLongClickListener(view -> {
+            Intent sendIntent = new Intent();
+            sendIntent.setAction(Intent.ACTION_SEND);
+            sendIntent.putExtra(Intent.EXTRA_STREAM, Uri.parse(url));
+            sendIntent.setType("image/*");
+            startActivity(sendIntent);
+            return false;
         });
     }
 }
