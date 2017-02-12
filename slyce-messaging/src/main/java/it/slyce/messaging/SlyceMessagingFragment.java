@@ -527,7 +527,8 @@ public class SlyceMessagingFragment extends Fragment implements OnClickListener 
                     listener.onUserSendsMediaMessage(selectedImageUri);
             }
         } catch (RuntimeException exception) {
-            Log.d("debug", exception.getMessage());
+            Toast.makeText(getActivity(), "Something went wrong, try again!", Toast.LENGTH_SHORT).show();
+            Crashlytics.logException(exception);
             exception.printStackTrace();
         }
     }
