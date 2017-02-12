@@ -1,4 +1,14 @@
+buildscript {
+    repositories {
+        maven { url 'https://maven.fabric.io/public' }
+    }
+
+    dependencies {
+        classpath 'io.fabric.tools:gradle:1.21.7'
+    }
+}
 apply plugin: 'com.android.library'
+apply plugin: 'io.fabric'
 apply plugin: 'me.tatarka.retrolambda'
 
 ext {
@@ -71,7 +81,9 @@ android {
     }
 }
 
-
+repositories {
+    maven { url 'https://maven.fabric.io/public' }
+}
 dependencies {
     compile fileTree(include: ['*.jar'], dir: 'libs')
 
@@ -104,6 +116,11 @@ dependencies {
     compile 'com.jakewharton.rxbinding:rxbinding:1.0.0'
 
 
+    compile 'com.github.chrisbanes:PhotoView:1.3.1'
+
+    compile('com.crashlytics.sdk.android:crashlytics:2.6.6@aar') {
+        transitive = true;
+    }
 }
 
 // Place it at the end of the file
